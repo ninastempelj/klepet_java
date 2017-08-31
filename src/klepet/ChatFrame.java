@@ -169,7 +169,6 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 	@Override
 	public void windowClosed(WindowEvent e) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
