@@ -10,6 +10,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -29,6 +30,7 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 	public JTextField vzdevek;
 	private JButton prijavniGumb;
 	private JButton odjavniGumb;
+//	private JButton prikazi;  - pomozni gumb nekaj èasa
 //	private JPanel skupniPogovor;
 //	private JPanel zasebniPogovor;
 //	private JSplitPane split;
@@ -105,6 +107,10 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 	    vzdevekVrstica.add(odjavniGumb);
 	    odjavniGumb.addActionListener(this); 
 	    
+	    //this.prikazi = new JButton("Prikaži");
+	    //vzdevekVrstica.add(prikazi);
+	    //prikazi.addActionListener(this); 
+	    
 	    this.robot = new Robot(this);
 		
 	}
@@ -116,34 +122,67 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 	
 	//public ___ preberiSporocila():
 	
-	public void objaviSporocilo(String person, String message) {
+	/**
+	 * S to funkcijo objekt Sporocilo pošljemo naslovniku
+	 * @param posiljatelj 
+	 * @param vsebina
+	 */
+	public void izpisiSporocilo(Sporocilo sporocilo) {
 		String chat = this.output.getText();
-		this.output.setText(chat + person + ": " + message + "\n");
+		String posiljatelj = sporocilo.getSender();
+		this.output.setText(chat + posiljatelj + ": " + sporocilo.getText() + "\n");
+		if (posiljatelj == vzdevek.getText()) {
+			sporocilo.setSender(posiljatelj);
+		Komunikacija.posljiSporocilo(sporocilo);
+		}
 	}
+
 	
+	public void izpisiSporocilo(List<Sporocilo> novaSporocila) {
+		for (Sporocilo sporocilo : novaSporocila) {
+			izpisiSporocilo(sporocilo);
+		}
+		
+	}
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		Sporocilo obvestilo = new Sporocilo("true", "");
+		obvestilo.setSender("Sistem");
 		if (e.getSource() == prijavniGumb) {
 			try{
-			komunikacija.logirajSe(vzdevek.getText());
-			objaviSporocilo("Sistem", "Prijava je uspela.");
+			Komunikacija.logirajSe(vzdevek.getText());
+			obvestilo.setText("Prijava je uspela.");
+			izpisiSporocilo(obvestilo);
 			robot.aktiviraj();
 			} catch (Exception ef) {
-		  		objaviSporocilo("Sistem", "Uporabnik s tem imenom je že prijavljen.");
+				obvestilo.setText("Uporabnik s tem imenom je že prijavljen.");
+		  		izpisiSporocilo(obvestilo);
 			  } 
 		}
 		if (e.getSource() == odjavniGumb) {
 			robot.deaktiviraj();
-			komunikacija.odjaviSe(vzdevek.getText());
-			objaviSporocilo("Sistem", "Odjava je uspela.");
+			Komunikacija.odjaviSe(vzdevek.getText());
+			obvestilo.setText("Odjava je uspela.");
+			izpisiSporocilo(obvestilo);
 		}
+		
+		/*
+		 * prikazovanje vseh spororèil v debilni obliki za preverjanje a jih sploh dobivam
+		 */
+		//if (e.getSource() == prikazi) {
+		//	objaviSporocilo(Komunikacija.novaSporocila(vzdevek.getText()));
+		//}
 	}
 
 	@Override
 	public void keyTyped(KeyEvent e) {
 		if (e.getSource() == this.input) {
 			if (e.getKeyChar() == '\n') {
-				this.objaviSporocilo(vzdevek.getText(), this.input.getText());
+				Sporocilo sporocilo = new Sporocilo("true", this.input.getText());
+				sporocilo.setSender(vzdevek.getText());
+				this.izpisiSporocilo(sporocilo);
+				Komunikacija.posljiSporocilo(sporocilo);
 				this.input.setText("");
 			}
 		}		
@@ -171,9 +210,14 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 		// TODO Auto-generated method stub
 	}
 
+	/*
+	 * Èe uporabnik zapre okno brez odjave, se odjavi samodejno.
+	 * @see java.awt.event.WindowListener#windowClosing(java.awt.event.WindowEvent)
+	 */
 	@Override
 	public void windowClosing(WindowEvent e) {
-		// TODO Auto-generated method stub
+		Komunikacija.odjaviSe(vzdevek.getText());
+		robot.deaktiviraj();
 		
 	}
 

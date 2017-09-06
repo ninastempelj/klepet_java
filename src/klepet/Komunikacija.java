@@ -3,41 +3,58 @@ package klepet;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 
-public class komunikacija {
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-	public static void main(String[] args) {
+public class Komunikacija {
+	
+	static String time = Long.toString(new Date().getTime());
+
+	/*public static void main(String[] args) {
 		String ime = "Nina";
 		//logirajSe(ime);
-		System.out.println(sporocila(ime));
-		poslji(ime, "Oj!");
+		System.out.println(novaSporocila(ime));
+		posljiSporocilo(ime, "Oj!");
 		//odjaviSe(ime);
 		System.out.println(vpisaniUporabniki());
-	}
+		}
+*/	
 
 
 	
-	public static String vpisaniUporabniki (){
+	/*public static String vpisaniUporabniki (){
 		try {
-            String uporabniki = Request.Get("http://chitchat.andrej.com/users")
+            String suroviUporabniki = Request.Get("http://chitchat.andrej.com/users")
                                   .execute()
                                   .returnContent().asString();
+            
+			ObjectMapper map = new ObjectMapper();
+			List <Uporabnik> prijavljeniUporabniki = map.readValue(suroviUporabniki, 
+					new TypeReference<List<Uporabnik>>(){});
+			
+			return prijavljeniUporabniki;
+            
             return uporabniki;
         } catch (IOException e) {
         		e.printStackTrace();
         		return new String();
         }		
 	}
-	
+	*/
 	public static void logirajSe(String ime) throws ClientProtocolException, IOException{
 	  try{
 		  URI uri = new URIBuilder("http://chitchat.andrej.com/users")
 	          .addParameter("username", ime)
+			  .addParameter("stop_cache", time)
 	          .build();
 		  String responseBody = Request.Post(uri)
                   .execute()
@@ -54,7 +71,9 @@ public class komunikacija {
 	try {
 		uri = new URIBuilder("http://chitchat.andrej.com/users")
 		          .addParameter("username", ime)
+				  .addParameter("stop_cache", time)
 		          .build();
+		
 		 String responseBody = Request.Delete(uri)
 			         .execute()
 			         .returnContent()
@@ -68,43 +87,51 @@ public class komunikacija {
 		}
 	}
 	
-	public static String sporocila(String ime){
+	public static List<Sporocilo> novaSporocila(String ime){
 		URI uri;
 		try {
 			uri = new URIBuilder("http://chitchat.andrej.com/messages")
 			          .addParameter("username", ime)
+					  .addParameter("stop_cache", time)
 			          .build();
 		  String responseBody;
 			responseBody = Request.Get(uri)
 			                               .execute()
 			                               .returnContent()
 			                               .asString();
-			  return(responseBody);
+						
+			ObjectMapper map = new ObjectMapper();
+			List <Sporocilo> seznamSporocil = map.readValue(responseBody, 
+					new TypeReference<List<Sporocilo>>(){});
+			
+			return seznamSporocil;
+			  
 		} catch (URISyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return new String();
+			return new ArrayList<Sporocilo>() ;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return new String();
+			return new ArrayList<Sporocilo>();
 		}		
 	}
 	
-	public static void poslji(String ime, String tekst){
+	public static void posljiSporocilo(Sporocilo sporocilo){
 			URI uri;
 			try {
 				uri = new URIBuilder("http://chitchat.andrej.com/messages")
-				  .addParameter("username", ime)
+				  .addParameter("username", sporocilo.getSender())
+				  .addParameter("stop_cache", time)
 				  .build();
-				  String message = "{ \"global\" : true, \"text\" :  \""+ tekst + "\"}";
+				  String message = "{ \"global\" : " + sporocilo.getGlobal() + ", \"text\" :  \""+ sporocilo.getText() + "\"}";
 
 				  String responseBody = Request.Post(uri)
 					          .bodyString(message, ContentType.APPLICATION_JSON)
 					          .execute()
 					          .returnContent()
 					          .asString();
-			
+
 				  System.out.println(responseBody);
 			} catch (URISyntaxException e) {
 				// TODO Auto-generated catch block
@@ -114,9 +141,15 @@ public class komunikacija {
 				e.printStackTrace();
 			}
 
-
-
 	}
+	
+//	private static Vector<Map<String, String>> 
+//							odpakirajSporocila(String zapakirana){
+//		Vector<Map<String, String>> odpakirana = new Vector<Map<String, String>>();
+//		
+//		return odpakirana;
+//		
+//	}
 }
 	
 
