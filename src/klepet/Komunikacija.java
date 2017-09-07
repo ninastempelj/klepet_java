@@ -19,19 +19,8 @@ public class Komunikacija {
 	
 	static String time = Long.toString(new Date().getTime());
 
-	/*public static void main(String[] args) {
-		String ime = "Nina";
-		//logirajSe(ime);
-		System.out.println(novaSporocila(ime));
-		posljiSporocilo(ime, "Oj!");
-		//odjaviSe(ime);
-		System.out.println(vpisaniUporabniki());
-		}
-*/	
-
-
 	
-	/*public static String vpisaniUporabniki (){
+	public static List<Uporabnik> vpisaniUporabniki (){
 		try {
             String suroviUporabniki = Request.Get("http://chitchat.andrej.com/users")
                                   .execute()
@@ -40,16 +29,15 @@ public class Komunikacija {
 			ObjectMapper map = new ObjectMapper();
 			List <Uporabnik> prijavljeniUporabniki = map.readValue(suroviUporabniki, 
 					new TypeReference<List<Uporabnik>>(){});
-			
+			//System.out.println(suroviUporabniki);
 			return prijavljeniUporabniki;
             
-            return uporabniki;
         } catch (IOException e) {
         		e.printStackTrace();
-        		return new String();
+        		return new ArrayList<Uporabnik>();
         }		
 	}
-	*/
+	
 	public static void logirajSe(String ime) throws ClientProtocolException, IOException{
 	  try{
 		  URI uri = new URIBuilder("http://chitchat.andrej.com/users")

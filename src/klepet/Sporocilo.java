@@ -20,7 +20,7 @@ public class Sporocilo {
 		this.text = vsebina;
 	}
 	
-	public Sporocilo(String globalno, String vsebina, String naslovnik) {
+	public Sporocilo(String globalno, String naslovnik, String vsebina) {
 		this.global = globalno;
 		this.text = vsebina;
 		this.recipient = naslovnik;
