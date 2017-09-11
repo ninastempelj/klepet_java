@@ -1,6 +1,7 @@
 package klepet;
 
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -10,13 +11,16 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
@@ -24,113 +28,205 @@ import javax.swing.JTextField;
 public class ChatFrame extends JFrame implements ActionListener, KeyListener, WindowListener {
 	
 	
-	private JTextArea output; //prikaz sporoèil
-	private JTextField input; // pisanje sporoèil
+	private JTextArea outputSkupni; //prikaz sporoèil
+	private JTextField inputSkupni; // pisanje sporoèil
 	private JLabel napisVzdevek;     
 	public JTextField vzdevek;  // okno v katerega napišeš vzdevek
 	private JButton prijavniGumb;
 	private JButton odjavniGumb;
 	private JButton prikazi; // - pomozni gumb nekaj èasa
-//	private JPanel skupniPogovor;
-//	private JPanel zasebniPogovor;
-//	private JSplitPane split;
+	private JPanel skupniPogovor;
+	private JPanel zasebniPogovor;
+	private JSplitPane razdeliPogovor;
+	private JPanel uporabniki;
 	private Robot robot;
+	private Boolean prijavljen;
+	private String prejsnji; // hrani vse uporabnike, ki so se prijavili v tem oknu
+	private JTextField inputZasebni;
+	private JTextArea outputZasebni;
+	private JSplitPane razdeliVrstico;
+	private JSplitPane razdeliUporabnik;
+	private JTextArea izpisUporabnikov;
 	
 	public ChatFrame() {
 		super();
 		Container pane = this.getContentPane();  // naredimo osnovno plošèo 
-		pane.setLayout(new GridBagLayout());
-		
-		napisVzdevek = new JLabel("Vzdevek: ");
-		vzdevek = new JTextField(10);
-		vzdevek.setText(System.getProperty("user.name"));
 		
 		/*
-		 * Tu naredimo vrstico z vzdevkom in gumbi.
+		 * Razdelimo naše okno na štiri dele: 
+		 * - najprej navpièno na vrstico z vzdevkom in gumbi in vse ostalo
+		 * - to potem na uporabnike in pogovore
+	     * - pogovore pa še na zasebne in skupni.
+		 * 
+		 * Najprej moramo sestaviti vse te štiri komponente:
+		 * 
+		 * To je vrstica za vzdevek in gumbe:
 		 */
+		
 		JPanel vzdevekVrstica = new JPanel();  
 		vzdevekVrstica.setLayout(new FlowLayout(FlowLayout.LEFT));
-		vzdevekVrstica.add(napisVzdevek);
-		vzdevekVrstica.add(vzdevek);
-		GridBagConstraints vzdevekConstraint = new GridBagConstraints();
+		/*
+		 * GridBagConstraints vzdevekConstraint = new GridBagConstraints();
 		vzdevekConstraint.gridx = 0;
 		vzdevekConstraint.gridy = 0;
 		vzdevekConstraint.fill = 2;
 		vzdevekConstraint.weightx = 1;
 		vzdevekConstraint.weighty = 0;
-		pane.add(vzdevekVrstica, vzdevekConstraint);	
+		pane.add(vzdevekVrstica, vzdevekConstraint);
+		*/
 		
+		/*
+		 * To je okno za vse razen vrstice z vzdevki
+		 */
+		JPanel ostalo = new JPanel();
 		
-//		JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, skupniPogovor, zasebniPogovor);
-//		split.setOneTouchExpandable(true);
-//		
-//		this.skupniPogovor = new JPanel();
-//		GridBagConstraints skupniConstraint = new GridBagConstraints();
-//		skupniConstraint.gridx = 0;
-//		skupniConstraint.gridy = 0;
-//		skupniConstraint.fill = 1;
-//		skupniConstraint.weightx = 1;
-//		skupniConstraint.weighty = 1;
-//		
-//		this.zasebniPogovor = new JPanel();
-//		GridBagConstraints zasebniConstraint = new GridBagConstraints();
-//		zasebniConstraint.gridx = 0;
-//		zasebniConstraint.gridy = 0;
-//		zasebniConstraint.fill = 1;
-//		zasebniConstraint.weightx = 1;
-//		zasebniConstraint.weighty = 1;
-//		pane.add(split);
+		/*
+		 * Okno z vsemi pogovori
+		 */
+		JPanel pogovori = new JPanel();
 		
-		this.output = new JTextArea(20, 40);
-		this.output.setEditable(false);
-		GridBagConstraints pogovorConstraint = new GridBagConstraints();
-		pogovorConstraint.gridx = 0;
-		pogovorConstraint.gridy = 1;
-		pogovorConstraint.fill = 1;
-		pogovorConstraint.weightx = 1;
-		pogovorConstraint.weighty = 1;
-		JScrollPane pogovor = new JScrollPane(output);
-		pane.add(pogovor, pogovorConstraint);
+		/*
+		 * To je podokno za skupni pogovor.
+		 */
+		this.skupniPogovor = new JPanel();
+		skupniPogovor.setMinimumSize(new Dimension(30, 100));
+		skupniPogovor.setLayout(new GridBagLayout());
 		
-		this.input = new JTextField(40);
-		GridBagConstraints pisanjeConstraint = new GridBagConstraints();
-		pisanjeConstraint.gridx = 0;
-		pisanjeConstraint.gridy = 2;
-		pisanjeConstraint.fill = 2;
-		pane.add(input, pisanjeConstraint);
-		input.addKeyListener(this);
+		/*
+		 * To je podokno za zasebni pogovor.
+		 */
+		this.zasebniPogovor = new JPanel();
+		zasebniPogovor.setMinimumSize(new Dimension(30, 100));
+		zasebniPogovor.setLayout(new GridBagLayout());
+		
+		/*
+		 * To je podokno za prikaz prijavljenih uporabnikov.
+		 */
+		this.uporabniki = new JPanel();
+		uporabniki.setMinimumSize(new Dimension(30, 100));
+		
+		/*
+		 * Razdeljevanje okna:
+		 */
+		
+		this.razdeliVrstico = new JSplitPane(JSplitPane.VERTICAL_SPLIT, vzdevekVrstica, ostalo);
+		this.razdeliUporabnik = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, pogovori, uporabniki);
+		this.razdeliPogovor = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, skupniPogovor, zasebniPogovor);
+		razdeliPogovor.setOneTouchExpandable(true);
+		razdeliUporabnik.setOneTouchExpandable(true);
+		
+		/*
+		 * GridBagConstraints razdeljenoConstraint = new GridBagConstraints();
+		razdeljenoConstraint.gridx = 0;
+		razdeljenoConstraint.gridy = 1;
+		razdeljenoConstraint.fill = 2;
+		razdeljenoConstraint.weightx = 1;
+		razdeljenoConstraint.weighty = 1;
+		*/
+		pane.add(razdeliVrstico);
+		ostalo.add(razdeliUporabnik);
+		pogovori.add(razdeliPogovor);
+		
+		/*
+		 * Elementi v vrstici za vzdevek:
+		 */
+		napisVzdevek = new JLabel("Vzdevek: ");
+		vzdevekVrstica.add(napisVzdevek);
+		
+		vzdevek = new JTextField(10);
+		vzdevek.setText(System.getProperty("user.name"));
+		vzdevekVrstica.add(vzdevek);
+		
+		this.prijavniGumb =  new JButton("Prijava");
+		vzdevekVrstica.add(prijavniGumb);
+		prijavniGumb.addActionListener(this);
+		  
+		this.odjavniGumb =  new JButton("Odjava");
+		vzdevekVrstica.add(odjavniGumb);
+		odjavniGumb.addActionListener(this); 
+		   
+		this.prikazi = new JButton("Prikaži");
+		vzdevekVrstica.add(prikazi);
+		prikazi.addActionListener(this);
+		
+		/*
+		 * Elementi v uporabnikih
+		 */
+		
+		this.izpisUporabnikov = new JTextArea(20, 20);
+		this.izpisUporabnikov.setEditable(false);
+		uporabniki.add(izpisUporabnikov);
+		izpisiUporabnike(Komunikacija.vpisaniUporabniki());
+		
+		/*
+		 * Elementi skupnega pogovora
+		 */
+		this.outputSkupni = new JTextArea(20, 40);
+		this.outputSkupni.setEditable(false);
+		GridBagConstraints pogovorSkupniConstraint = new GridBagConstraints();
+		pogovorSkupniConstraint.gridx = 0;
+		pogovorSkupniConstraint.gridy = 0;
+		pogovorSkupniConstraint.fill = 1;
+		pogovorSkupniConstraint.weightx = 1;
+		pogovorSkupniConstraint.weighty = 1;
+		JScrollPane pogovorSkupni = new JScrollPane(outputSkupni);
+		skupniPogovor.add(pogovorSkupni, pogovorSkupniConstraint);
+		
+		this.inputSkupni = new JTextField(40);
+		GridBagConstraints pisanjeSkupniConstraint = new GridBagConstraints();
+		pisanjeSkupniConstraint.gridx = 0;
+		pisanjeSkupniConstraint.gridy = 3;
+		pisanjeSkupniConstraint.fill = 2;
+		pisanjeSkupniConstraint.weightx = 1;
+		pisanjeSkupniConstraint.weighty = 1;
+		skupniPogovor.add(inputSkupni, pisanjeSkupniConstraint);
+		inputSkupni.addKeyListener(this);
+	    addWindowListener(this);
+
+	    /*
+	     * Elementi zasebnega pogovora.
+	     */
+		this.outputZasebni = new JTextArea(20, 40);
+		this.outputZasebni.setEditable(false);
+		GridBagConstraints pogovorZasebniConstraint = new GridBagConstraints();
+		pogovorZasebniConstraint.gridx = 0;
+		pogovorZasebniConstraint.gridy = 2;
+		pogovorZasebniConstraint.fill = 1;
+		pogovorZasebniConstraint.weightx = 1;
+		pogovorZasebniConstraint.weighty = 1;
+		JScrollPane pogovorZasebni = new JScrollPane(outputZasebni);
+		zasebniPogovor.add(pogovorZasebni, pogovorZasebniConstraint);
+		
+	    this.inputZasebni = new JTextField(40);
+		GridBagConstraints pisanjeZasebniConstraint = new GridBagConstraints();
+		pisanjeZasebniConstraint.gridx = 0;
+		pisanjeZasebniConstraint.gridy = 3;
+		pisanjeZasebniConstraint.fill = 2;
+		pisanjeZasebniConstraint.weightx = 1;
+		pisanjeZasebniConstraint.weighty = 1;
+		zasebniPogovor.add(inputZasebni, pisanjeZasebniConstraint);
+		inputZasebni.addKeyListener(this);
 	    addWindowListener(this);
 	    
-	    this.prijavniGumb =  new JButton("Prijava");
-	    vzdevekVrstica.add(prijavniGumb);
-	    prijavniGumb.addActionListener(this);
+
+	    /*
+	     * Elementi prikaza uporabnikov
+	     */
+		// TODO: uporabniško okno
 	    
-	    this.odjavniGumb =  new JButton("Odjava");
-	    vzdevekVrstica.add(odjavniGumb);
-	    odjavniGumb.addActionListener(this); 
-	    
-	    this.prikazi = new JButton("Prikaži");
-	    vzdevekVrstica.add(prikazi);
-	    prikazi.addActionListener(this); 
 	    
 	    this.robot = new Robot(this);
-		
+		this.prijavljen = false;
+		this.prejsnji = new String();
 	}
 	
-	/**
-	 * @param person - the person sending the message
-	 * @param message - the message content
-	 */
-	
-	//public ___ preberiSporocila():
-	
-	/**
+	/*
 	 * Ta metoda sporoèilo izpiše na zaslon, èe gre za naše sporoèilo, ga pošlje naprej.
 	 */
 	public void izpisiSporocilo(Sporocilo sporocilo) {
-		String chat = this.output.getText();
+		String chat = this.outputSkupni.getText();
 		String posiljatelj = sporocilo.getSender();
-		this.output.setText(chat + posiljatelj + ": " + sporocilo.getText() + "\n");
+		this.outputSkupni.setText(chat + posiljatelj + ": " + sporocilo.getText() + "\n");
 		if (posiljatelj == vzdevek.getText()) {
 			sporocilo.setSender(posiljatelj);
 		Komunikacija.posljiSporocilo(sporocilo);
@@ -150,10 +246,9 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 	public void izpisiUporabnike(List<Uporabnik> uporabniki) {
 		String zaNapisat = new String();
 		for (Uporabnik nekdo : uporabniki) {
-			zaNapisat += nekdo.getUsername() + ", ";
+			zaNapisat += nekdo.getUsername() + "\n";
 		}
-		String chat = this.output.getText();
-		this.output.setText(chat + zaNapisat + "\n");
+		this.izpisUporabnikov.setText(zaNapisat);
 		
 	}
 
@@ -162,22 +257,34 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 		Sporocilo obvestilo = new Sporocilo("true", ""); // izpisalo se bo obvestilo, kaj se je zgodilo. 
 		obvestilo.setSender("Sistem");
 		obvestilo.setGlobal("true");
+		String ime = vzdevek.getText();
+		
 		if (e.getSource() == prijavniGumb) {
 			try{
-			Komunikacija.logirajSe(vzdevek.getText());
-			obvestilo.setText("Prijava je uspela.");
-			izpisiSporocilo(obvestilo);
+				if (this.prijavljen) {
+					Komunikacija.odjaviSe(ime);
+					robot.deaktiviraj();
+				}
+			Komunikacija.logirajSe(ime);
+			this.prejsnji = (ime);
+			this.prijavljen = true;
+			obvestilo.setText("Prijava " + ime + " je uspela.");
 			robot.aktiviraj();
+			izpisiSporocilo(obvestilo);
 			} catch (Exception ef) {
-				obvestilo.setText("Uporabnik s tem imenom je že prijavljen.");
-		  		izpisiSporocilo(obvestilo);
-			  } 
+				ef.printStackTrace();
+				obvestilo.setText("Uporabnik " + ime + " je že prijavljen.");
+				izpisiSporocilo(obvestilo);
+				}
+			
 		}
+		
 		if (e.getSource() == odjavniGumb) {
 			robot.deaktiviraj();
-			Komunikacija.odjaviSe(vzdevek.getText());
-			obvestilo.setText("Odjava je uspela.");
+			Komunikacija.odjaviSe(ime);
+			obvestilo.setText("Odjava " + ime +" je uspela.");
 			izpisiSporocilo(obvestilo);
+			this.prijavljen = false;
 		}
 		
 		/*
@@ -190,13 +297,13 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 
 	@Override
 	public void keyTyped(KeyEvent e) {
-		if (e.getSource() == this.input) {
+		if (e.getSource() == this.inputSkupni) {
 			if (e.getKeyChar() == '\n') {
-				Sporocilo sporocilo = new Sporocilo("true", this.input.getText());
+				Sporocilo sporocilo = new Sporocilo("true", this.inputSkupni.getText());
 				sporocilo.setSender(vzdevek.getText());
 				this.izpisiSporocilo(sporocilo);
 				Komunikacija.posljiSporocilo(sporocilo);
-				this.input.setText("");
+				this.inputSkupni.setText("");
 			}
 		}		
 	}
@@ -229,9 +336,10 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 	 */
 	@Override
 	public void windowClosing(WindowEvent e) {
-		Komunikacija.odjaviSe(vzdevek.getText());
+		if (this.prijavljen) {
+		Komunikacija.odjaviSe(this.prejsnji);
 		robot.deaktiviraj();
-		
+		}
 	}
 
 	@Override
@@ -254,7 +362,7 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 
 	@Override
 	public void windowOpened(WindowEvent e) {
-		input.requestFocusInWindow();
+		inputSkupni.requestFocusInWindow();
 		
 	}
 	

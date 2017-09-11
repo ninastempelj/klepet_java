@@ -29,7 +29,6 @@ public class Komunikacija {
 			ObjectMapper map = new ObjectMapper();
 			List <Uporabnik> prijavljeniUporabniki = map.readValue(suroviUporabniki, 
 					new TypeReference<List<Uporabnik>>(){});
-			//System.out.println(suroviUporabniki);
 			return prijavljeniUporabniki;
             
         } catch (IOException e) {
@@ -131,13 +130,6 @@ public class Komunikacija {
 
 	}
 	
-//	private static Vector<Map<String, String>> 
-//							odpakirajSporocila(String zapakirana){
-//		Vector<Map<String, String>> odpakirana = new Vector<Map<String, String>>();
-//		
-//		return odpakirana;
-//		
-//	}
 }
 	
 
