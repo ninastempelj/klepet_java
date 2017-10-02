@@ -33,7 +33,7 @@ public class Robot extends TimerTask {
 
 	@Override
 	public void run() {
-		this.chat.izpisiSporocilo(Komunikacija.novaSporocila(chat.vzdevek.getText()));
+		this.chat.izpisiSporocilo(Komunikacija.novaSporocila(chat.getPrejsnji()));
 		this.chat.izpisiUporabnike(Komunikacija.vpisaniUporabniki());
 	}
 	

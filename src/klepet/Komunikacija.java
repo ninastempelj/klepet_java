@@ -111,8 +111,12 @@ public class Komunikacija {
 				  .addParameter("username", sporocilo.getSender())
 				  .addParameter("stop_cache", time)
 				  .build();
-				  String message = "{ \"global\" : " + sporocilo.getGlobal() + ", \"text\" :  \""+ sporocilo.getText() + "\"}";
-
+				String message = "";
+				if (sporocilo.getGlobal()) {
+				    message = "{ \"global\" : " + true + ", \"text\" :  \""+ sporocilo.getText() + "\"}";
+				}else {
+					message = "{ \"global\" : " + false + ", \"recipient\" :  \"" + sporocilo.getRecipient() + "\"text\" :  \""+ sporocilo.getText() + "\"}";
+				}
 				  String responseBody = Request.Post(uri)
 					          .bodyString(message, ContentType.APPLICATION_JSON)
 					          .execute()
@@ -123,6 +127,7 @@ public class Komunikacija {
 			} catch (URISyntaxException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

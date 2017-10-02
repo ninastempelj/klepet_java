@@ -2,7 +2,7 @@ package klepet;
 
 
 public class Sporocilo {
-	private String global;
+	private Boolean global;
 	private String sender;
 	private String text;
 	private String recipient;
@@ -15,18 +15,18 @@ public class Sporocilo {
 	public Sporocilo() {
 	}
 	
-	public Sporocilo(String globalno, String vsebina) {
+	public Sporocilo(Boolean globalno, String vsebina) {
 		this.global = globalno;
 		this.text = vsebina;
 	}
 	
-	public Sporocilo(String globalno, String naslovnik, String vsebina) {
+	public Sporocilo(Boolean globalno, String naslovnik, String vsebina) {
 		this.global = globalno;
 		this.text = vsebina;
 		this.recipient = naslovnik;
 	}
 	
-	public Sporocilo(String globalno, String naslovnik, String posiljatelj, 
+	public Sporocilo(Boolean globalno, String naslovnik, String posiljatelj, 
 			String vsebina, String sent_at) {
 		this.global = globalno;
 		this.text = vsebina;
@@ -47,10 +47,10 @@ public class Sporocilo {
 	public void setText(String vsebina) {
 		this.text = vsebina;
 	}
-	public String getGlobal() {
+	public Boolean getGlobal() {
 		return global;
 	}
-	public void setGlobal(String globalno) {
+	public void setGlobal(Boolean globalno) {
 		this.global = globalno;
 	}
 	public String getSender() {
