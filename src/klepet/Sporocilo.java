@@ -27,6 +27,14 @@ public class Sporocilo {
 	}
 	
 	public Sporocilo(Boolean globalno, String naslovnik, String posiljatelj, 
+			String vsebina) {
+		this.global = globalno;
+		this.text = vsebina;
+		this.sender = posiljatelj;
+		this.recipient = naslovnik;
+	}
+	
+	public Sporocilo(Boolean globalno, String naslovnik, String posiljatelj, 
 			String vsebina, String sent_at) {
 		this.global = globalno;
 		this.text = vsebina;
