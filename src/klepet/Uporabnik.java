@@ -49,7 +49,7 @@ public class Uporabnik {
 	}
 	
 	public void setOutput() {
-		this.output = new JTextArea(20, 40);
+		this.output = new JTextArea(18, 40);
 		this.output.setEditable(false);
 	}
 
