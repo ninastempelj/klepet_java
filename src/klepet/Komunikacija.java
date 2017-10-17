@@ -113,10 +113,11 @@ public class Komunikacija {
 				  .build();
 				String message = "";
 				if (sporocilo.getGlobal()) {
-				    message = "{ \"global\" : " + true + ", \"text\" :  \""+ sporocilo.getText() + "\"}";
+				    message = "{ \"global\" : " + true + ", \"text\" :  \"" + sporocilo.getText() + "\"}";
 				}else {
-					message = "{ \"global\" : " + false + ", \"recipient\" :  \"" + sporocilo.getRecipient() + "\"text\" :  \""+ sporocilo.getText() + "\"}";
+					message = "{ \"global\" : " + false + ", \"recipient\" :  \"" + sporocilo.getRecipient() + "\", \"text\" :  \""+ sporocilo.getText() + "\"}";
 				}
+				  System.out.println(message);
 				  String responseBody = Request.Post(uri)
 					          .bodyString(message, ContentType.APPLICATION_JSON)
 					          .execute()
