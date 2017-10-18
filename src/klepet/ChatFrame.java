@@ -1,7 +1,6 @@
 package klepet;
 
 import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -356,13 +355,14 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 			/*
 			 * Pritisnjena tipka je Enter v skupni pogovor - sproži izpis sporoèila in pošiljanje.
 			 */
-			// TODO: prazna sporoèila!!
 			if (e.getKeyChar() == '\n') {
-				Sporocilo sporocilo = new Sporocilo(true, this.inputSkupni.getText());
-				sporocilo.setSender(vzdevek.getText());
-				this.izpisiSporocilo(sporocilo, this.outputSkupni);
-				Komunikacija.posljiSporocilo(sporocilo);
-				this.inputSkupni.setText("");
+				if (!this.inputSkupni.getText().equals("")) {
+					Sporocilo sporocilo = new Sporocilo(true, this.inputSkupni.getText());
+					sporocilo.setSender(vzdevek.getText());
+					this.izpisiSporocilo(sporocilo, this.outputSkupni);
+					Komunikacija.posljiSporocilo(sporocilo);
+					this.inputSkupni.setText("");
+				}
 			}
 		}
 
@@ -371,7 +371,7 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 				/*
 				 * Pritisnjena tipka je Enter v zasebni pogovor - sproži izpis sporoèila in pošiljanje.
 				 */
-				if (!prikazanNiUporabnikov) {
+				if (!prikazanNiUporabnikov && !this.inputZasebni.getText().equals("")) {
 					Sporocilo sporocilo = new Sporocilo(false, this.inputZasebni.getText());
 					sporocilo.setSender(vzdevek.getText());
 
@@ -398,7 +398,6 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 			robot.deaktiviraj();
 			this.prijavljen = false;
 		}
-		//TODO: dvojna odjava med zapiranjem okna!!!
 	}
 
 	@Override

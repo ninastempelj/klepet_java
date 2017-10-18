@@ -8,16 +8,16 @@ public class Uporabnik {
 	private String username;
 	private JTextArea output;
 	//private JTextField input;
-	
-	
+
+
 	public Uporabnik() {
 	}
-	
+
 	public Uporabnik(String ime, String aktiven) {
 		this.setUsername(ime);
 		this.setLast_active(aktiven);
 	}
-	
+
 	public Uporabnik(String ime, String aktiven, JTextArea output) {
 		this.setUsername(ime);
 		this.setLast_active(aktiven);
@@ -47,13 +47,13 @@ public class Uporabnik {
 	public void setOutput(JTextArea output) {
 		this.output = output;
 	}
-	
+
 	public void setOutput() {
 		this.output = new JTextArea(18, 35);
 		this.output.setEditable(false);
 	}
 
-	
-	
+
+
 
 }

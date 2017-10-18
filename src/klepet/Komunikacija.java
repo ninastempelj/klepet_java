@@ -111,7 +111,7 @@ public class Komunikacija {
 					.addParameter("username", sporocilo.getSender())
 					.addParameter("stop_cache", time)
 					.build();
-			
+
 			String message = "";
 			if (sporocilo.getGlobal()) {
 				message = "{ \"global\" : " + true + 
