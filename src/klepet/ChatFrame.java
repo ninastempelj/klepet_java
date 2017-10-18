@@ -80,14 +80,14 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 		 * Okno z javnim pogovorom
 		 */
 		JPanel javniPogovor = new JPanel();
-		javniPogovor.setMinimumSize(new Dimension(30, 100));
+		//javniPogovor.setMinimumSize(new Dimension(30, 100));
 		javniPogovor.setLayout(new GridBagLayout());
 
 		/*
 		 * To je podokno za prikaz možnih privatnih pogovorov
 		 */
 		this.okvirPrivatnihPogovorov = new JPanel();
-		okvirPrivatnihPogovorov.setMinimumSize(new Dimension(30,40));
+		//okvirPrivatnihPogovorov.setMinimumSize(new Dimension(30,40));
 		okvirPrivatnihPogovorov.setLayout(new GridBagLayout());
 
 		/*
@@ -164,7 +164,7 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 		javniPogovor.add(pogovorSkupni, pogovorSkupniConstraint);
 
 		this.inputSkupni = new JTextField(40);
-		this.inputSkupni.setMinimumSize(new Dimension(1,40));
+		//this.inputSkupni.setMinimumSize(new Dimension(1,40));
 		GridBagConstraints pisanjeSkupniConstraint = new GridBagConstraints();
 		pisanjeSkupniConstraint.gridx = 0;
 		pisanjeSkupniConstraint.gridy = 3;
@@ -356,6 +356,7 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 			/*
 			 * Pritisnjena tipka je Enter v skupni pogovor - sproži izpis sporoèila in pošiljanje.
 			 */
+			// TODO: prazna sporoèila!!
 			if (e.getKeyChar() == '\n') {
 				Sporocilo sporocilo = new Sporocilo(true, this.inputSkupni.getText());
 				sporocilo.setSender(vzdevek.getText());
@@ -378,7 +379,6 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 					String imePrejemnika = privatniPogovori.getTitleAt(indeksAktivnegaZavihka);
 					Uporabnik prejemnik = objektiUporabnikov.get(imePrejemnika);
 
-					System.out.println(imePrejemnika + " uporabnik " + prejemnik.getUsername());
 					sporocilo.setRecipient(imePrejemnika);
 					this.izpisiSporocilo(sporocilo, prejemnik.getOutput());
 					Komunikacija.posljiSporocilo(sporocilo);
@@ -396,6 +396,7 @@ public class ChatFrame extends JFrame implements ActionListener, KeyListener, Wi
 		if (this.prijavljen) {
 			Komunikacija.odjaviSe(this.prejsnji);
 			robot.deaktiviraj();
+			this.prijavljen = false;
 		}
 		//TODO: dvojna odjava med zapiranjem okna!!!
 	}

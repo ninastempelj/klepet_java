@@ -123,7 +123,6 @@ public class Komunikacija {
 						"\", \"text\" : \"" + sporocilo.getText() + 
 						"\"}";
 			}
-			System.out.println(message);
 			String responseBody = Request.Post(uri)
 					.bodyString(message, ContentType.APPLICATION_JSON)
 					.execute()
