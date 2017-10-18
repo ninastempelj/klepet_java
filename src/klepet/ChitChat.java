@@ -7,7 +7,7 @@ public class ChitChat {
 		ChatFrame chatFrame = new ChatFrame();
 		chatFrame.pack();
 		chatFrame.setVisible(true);
-		chatFrame.setTitle("");
+		chatFrame.setTitle("FMF pogovor");
 	}
 
 }
