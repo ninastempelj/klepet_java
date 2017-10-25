@@ -52,7 +52,7 @@ public class ChatFrame extends JFrame
 	private Set<String> trenutniUporabniki; // imena vseh trenutnih uporabnikov
 	// Imena uporabnikov povezuje z njihovimi objekti:
 	private Map<String, Uporabnik> objektiUporabnikov;
-	//private Set<String> hranjeniPogovori; // zavihki odjavljenih uporabnikov
+	private Set<String> hranjeniPogovori; // zavihki odjavljenih uporabnikov
 	private JTextArea niUporabnikov; // zavihek, ko ni prijavljenih uporabnikov
 	private boolean prikazanNiUporabnikov;
 	private Color siva = new Color(238, 238, 238);
@@ -64,6 +64,13 @@ public class ChatFrame extends JFrame
 		Container pane = this.getContentPane();  // shranimo osnovno plošèo
 		pane.setLayout(new GridBagLayout());
 		
+		//Nekaj zaèetnih vrednosti:
+		this.prikazanNiUporabnikov = true;
+		this.prijavljen = false;
+		this.prejsnji = new String();
+		this.trenutniUporabniki = new HashSet<String>();
+		this.objektiUporabnikov = new HashMap<String, Uporabnik>();
+		this.hranjeniPogovori = new HashSet<String>();
 		/*
 		 * Razdelimo naše okno na tri dele: 
 		 * - najprej na vrhu naredimo vrstico z vzdevkom in gumbi
@@ -145,7 +152,7 @@ public class ChatFrame extends JFrame
 		this.outputZasebni.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-                if (e.getSource() instanceof JTabbedPane) {
+                if (prijavljen && e.getSource() instanceof JTabbedPane) {
                     JTabbedPane output = (JTabbedPane) e.getSource();
                     output.setBackgroundAt(output.getSelectedIndex(), siva);
                 }
@@ -178,16 +185,10 @@ public class ChatFrame extends JFrame
 		pogovori.setOneTouchExpandable(true);
 		pane.add(pogovori, pogovoriCon);
 
-		// zaèetna dejanja:
 		this.niUporabnikov = new JTextArea(18,40);
 		this.niUporabnikov.setEditable(false);
 		this.outputZasebni.addTab("ni prijavljenih uporabnikov", 
 				this.niUporabnikov);
-		this.prikazanNiUporabnikov = true;
-		this.prijavljen = false;
-		this.prejsnji = new String();
-		this.trenutniUporabniki = new HashSet<String>();
-		this.objektiUporabnikov = new HashMap<String, Uporabnik>();
 		
 	}
 
@@ -306,12 +307,18 @@ public class ChatFrame extends JFrame
 
 	/*
 	 * Èe smo z uporabnikom zaèeli pogovor, ga ohrani,
-	 * dokler se ne prijavi nekdo z istim imenom, potem ga zaène na novo, 
-	 * saj je lahko to druga oseba.
+	 * dokler se ne prijavi nekdo z istim imenom, sicer zapre zavihek
 	 */
 	private void odjavljenUporabnik(String ime) {
-		// TODO Auto-generated method stub
-		
+		Uporabnik uporabnik = this.objektiUporabnikov.get(ime);
+		if (uporabnik.getOutput().getText().equals("")) {
+			odstraniZavihek(ime);
+		}else {
+		this.hranjeniPogovori.add(ime);
+		String text = uporabnik.getOutput().getText() + "Uporabnik " + ime + " se je odjavil.";
+		izpisiSporocilo(new Sporocilo(false, vzdevek.getText(), 
+				"Sistem", text), uporabnik.getOutput());
+		}
 	}
 
 	/*
@@ -325,6 +332,7 @@ public class ChatFrame extends JFrame
 		trenutniUporabniki = new HashSet<String>();
 		outputZasebni.addTab("ni prijavljenih uporabnikov", niUporabnikov);
 		prikazanNiUporabnikov = true;
+		this.hranjeniPogovori.clear();
 	}
 
 	/*
