@@ -75,7 +75,4 @@ public class Sporocilo {
 	public void setSent_at(String sent_at) {
 		this.sent_at = sent_at;
 	}
-	
-	
-
 }
