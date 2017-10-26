@@ -2,7 +2,6 @@ package klepet;
 
 import java.awt.Color;
 import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -13,6 +12,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,50 +28,64 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
 
 @SuppressWarnings("serial")
 public class ChatFrame extends JFrame 
-				implements ActionListener, KeyListener, WindowListener {
+implements ActionListener, KeyListener, WindowListener {
 
-
-	private JTextArea outputJavni; //prikaz sporoèil
-	private JTextField inputJavni; // pisanje sporoèil
+	private Robot robot;
 	private JLabel napisVzdevek;     
 	public JTextField vzdevek;  // okno v katerega napišeš vzdevek
 	private JButton prijavniGumb;
 	private JButton odjavniGumb;
-	private JPanel zasebniPogovor;
-	private Robot robot;
+	private JSplitPane pogovori;  
+	private JTextPane outputJavni; //prikaz sporoèil
+	private JTextField inputJavni; // pisanje sporoèil
+	private JTextField inputZasebni; 
+	private JTabbedPane outputZasebni;  // okvir za zavihke zasebnih pogovorov
 	private Boolean prijavljen; // ali je trenutno v tem oknu kdo prijavljen
 	private String prejsnji; // hrani zadnjega prijavljenega v tem oknu.
-	private JTextField inputZasebni; 
-	private JSplitPane pogovori;  
-	private JTabbedPane outputZasebni;  // okvir za zavihke zasebnih pogovorov
 	private Set<String> trenutniUporabniki; // imena vseh trenutnih uporabnikov
-	// Imena uporabnikov povezuje z njihovimi objekti:
-	private Map<String, Uporabnik> objektiUporabnikov;
+	private Map<String, Uporabnik> objektiUporabnikov; // Imena uporabnikov in njihovi objekti:
 	private Set<String> hranjeniPogovori; // zavihki odjavljenih uporabnikov
 	private JTextArea niUporabnikov; // zavihek, ko ni prijavljenih uporabnikov
 	private boolean prikazanNiUporabnikov;
-	private Color siva = new Color(238, 238, 238);
+	private String nisiPrijavljenText;
+	private String siPrijavljenTekst;
+	private Color siva;
+	private SimpleDateFormat sdf;
+	private Calendar cal;
+	private boolean odstranjujem;
 	// ------------------------------------------------------------------------
 
-	// TODO: Barvanje uporabnikov
+	// TODO: možnost zapiranja mrtvih zavihkov.
 	public ChatFrame() {
 		super();
 		Container pane = this.getContentPane();  // shranimo osnovno plošèo
 		pane.setLayout(new GridBagLayout());
-		
+
 		//Nekaj zaèetnih vrednosti:
 		this.prikazanNiUporabnikov = true;
+		this.nisiPrijavljenText = "Èe želiš videti, kdo je prijavljen,"
+		 		+ " se prijavi še ti.";
+		this.siPrijavljenTekst = "Trenutno si edini prijavljen.";
 		this.prijavljen = false;
 		this.prejsnji = new String();
 		this.trenutniUporabniki = new HashSet<String>();
 		this.objektiUporabnikov = new HashMap<String, Uporabnik>();
 		this.hranjeniPogovori = new HashSet<String>();
+		this.odstranjujem = false;
+		this.siva = new Color(238, 238, 238);
+		this.cal = Calendar.getInstance();
+		this.sdf = new SimpleDateFormat("HH:mm");
 		/*
 		 * Razdelimo naše okno na tri dele: 
 		 * - najprej na vrhu naredimo vrstico z vzdevkom in gumbi
@@ -80,14 +95,14 @@ public class ChatFrame extends JFrame
 		 */
 		JPanel vzdevekVrstica = new JPanel();  
 		vzdevekVrstica.setLayout(new FlowLayout(FlowLayout.LEFT));
-		
+
 		GridBagConstraints vrsticaCon = new GridBagConstraints();
 		vrsticaCon.gridx = 0;
 		vrsticaCon.gridy = 0;
 		vrsticaCon.fill = 1;
 		vrsticaCon.weightx = 1;
 		vrsticaCon.weighty = 0;
-		
+
 		napisVzdevek = new JLabel("Vzdevek: ");
 		vzdevekVrstica.add(napisVzdevek);
 
@@ -102,16 +117,16 @@ public class ChatFrame extends JFrame
 		this.odjavniGumb =  new JButton("Odjava");
 		vzdevekVrstica.add(odjavniGumb);
 		odjavniGumb.addActionListener(this); 
-		
+
 		pane.add(vzdevekVrstica, vrsticaCon);
-		
+
 		/*
 		 * komponenta javnega pogovora
 		 */
 		JPanel javniPogovor = new JPanel();
 		javniPogovor.setLayout(new GridBagLayout());
-		
-		this.outputJavni = new JTextArea(20, 28);
+
+		this.outputJavni = new JTextPane();
 		this.outputJavni.setEditable(false);
 		GridBagConstraints pogovorSkupniCon = new GridBagConstraints();
 		pogovorSkupniCon.gridx = 0;
@@ -132,13 +147,13 @@ public class ChatFrame extends JFrame
 		javniPogovor.add(this.inputJavni, pisanjeSkupniCon);
 		this.inputJavni.addKeyListener(this);
 		addWindowListener(this);
-		
+
 		/*
 		 * To je komponenta za prikaz možnih zasebnih pogovorov:
 		 * na zaèetku je odprt zavihek ni prijavljenih, 
 		 * ko se uporabnik prijavi tu potekajo zasebni pogovori.
 		 */
-		this.zasebniPogovor = new JPanel();
+		JPanel zasebniPogovor = new JPanel();
 		zasebniPogovor.setLayout(new GridBagLayout());
 
 		this.outputZasebni = new JTabbedPane();
@@ -149,14 +164,15 @@ public class ChatFrame extends JFrame
 		privatniPogovorCon.weightx = 0.5;
 		privatniPogovorCon.weighty = 1;
 		zasebniPogovor.add(this.outputZasebni, privatniPogovorCon);
+		//TODO: outputZasebni.setTabClosingPolicy(TabClosingPolicy.ALL_TABS);
 		this.outputZasebni.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-                if (prijavljen && e.getSource() instanceof JTabbedPane) {
-                    JTabbedPane output = (JTabbedPane) e.getSource();
-                    output.setBackgroundAt(output.getSelectedIndex(), siva);
-                }
-            }
+				if (!odstranjujem && prijavljen && e.getSource() instanceof JTabbedPane) {
+					JTabbedPane output = (JTabbedPane) e.getSource();
+					output.setBackgroundAt(output.getSelectedIndex(), siva);
+				}
+			}
 		});
 
 		this.inputZasebni = new JTextField(40);
@@ -173,23 +189,24 @@ public class ChatFrame extends JFrame
 		/*
 		 * Razdeljevanje pogovorov:
 		 */
-		this.pogovori = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-				javniPogovor, zasebniPogovor);
-		GridBagConstraints pogovoriCon = new GridBagConstraints();
-		pogovoriCon.gridx = 0;
-		pogovoriCon.gridy = 1;
-		pogovoriCon.fill = 1;
-		pogovoriCon.weightx = 1;
-		pogovoriCon.weighty = 1;
-		
-		pogovori.setOneTouchExpandable(true);
-		pane.add(pogovori, pogovoriCon);
+		 this.pogovori = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
+				 javniPogovor, zasebniPogovor);
+		 GridBagConstraints pogovoriCon = new GridBagConstraints();
+		 pogovoriCon.gridx = 0;
+		 pogovoriCon.gridy = 1;
+		 pogovoriCon.fill = 1;
+		 pogovoriCon.weightx = 1;
+		 pogovoriCon.weighty = 1;
 
-		this.niUporabnikov = new JTextArea(18,40);
-		this.niUporabnikov.setEditable(false);
-		this.outputZasebni.addTab("ni prijavljenih uporabnikov", 
-				this.niUporabnikov);
-		
+		 pogovori.setOneTouchExpandable(true);
+		 pane.add(pogovori, pogovoriCon);
+
+		 this.niUporabnikov = new JTextArea(18,40);
+		 this.niUporabnikov.setText(this.nisiPrijavljenText);
+		 this.niUporabnikov.setEditable(false);
+		 this.outputZasebni.addTab("ni prijavljenih uporabnikov", 
+				 this.niUporabnikov);
+
 	}
 
 	/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -200,35 +217,74 @@ public class ChatFrame extends JFrame
 	/*
 	 * Ta metoda sporoèilo izpiše na zaslon.
 	 */
-	// TODO: drugaèen font za moja in tuja
-	// TODO: èas poslanega sporoèila
-	// TODO: zvok ob novem sporoèilu 
-
-	public void izpisiSporocilo(Sporocilo sporocilo, JTextArea output) {
+	public void izpisiSporocilo(Sporocilo sporocilo, JTextPane output) {
 		String posiljatelj = sporocilo.getSender();
 		String jaz = vzdevek.getText();
-		String chat = output.getText();
 
 		//To se izvede, èe se uporabnik še ni prijavil:
-		if (!prijavljen && !posiljatelj.equals("Sistem")) {
+		if (!this.prijavljen && !posiljatelj.equals("Sistem")) {
 			Sporocilo obvestilo = new Sporocilo();
 			obvestilo.setSender("Sistem");
 			obvestilo.setText("Uporabnik " + jaz + " ni prijavljen.");
 			izpisiSporocilo(obvestilo, output);
 		}else{
-			output.setText(chat + 
-					posiljatelj + ": " + sporocilo.getText() + "\n");
+			dodajIme(output, posiljatelj);
+			dodajCas(output, " (" + sdf.format(cal.getTime())+ ") ");
+			dodajVsebino(output, sporocilo.getText() + "\n");
 			output.setCaretPosition(output.getDocument().getLength());
 		}
-		if (!posiljatelj.equals(jaz) && !posiljatelj.equals("Sistem")) {
+		// barvanje zavihka, èe je potrebno:
+		if (!sporocilo.getGlobal() && !posiljatelj.equals(jaz) 
+				&& !posiljatelj.equals("Sistem")) {
 			Integer index = this.outputZasebni.indexOfTab(posiljatelj);
 			if (! index.equals(this.outputZasebni.getSelectedIndex())) {
 				this.outputZasebni.setBackgroundAt(index, 
-					objektiUporabnikov.get(posiljatelj).getBarva());
+						objektiUporabnikov.get(posiljatelj).getBarva());
 			}
 		}
 	}
 
+	public void dodajIme(JTextPane pane, String ime) {
+		Color barva = Color.BLACK;
+		if (!ime.equals("Sistem") && !ime.equals(this.prejsnji)) {
+		barva = this.objektiUporabnikov.get(ime).getBarva();
+		}
+		StyledDocument doc = pane.getStyledDocument();
+
+		Style style = pane.addStyle("Color Style", null);
+		StyleConstants.setForeground(style, barva);
+		style.addAttribute(StyleConstants.Bold, true);
+		try {
+			doc.insertString(doc.getLength(), ime, style);
+		} 
+		catch (BadLocationException e) {
+			e.printStackTrace();
+		}           
+	}
+	public void dodajCas(JTextPane pane, String datum) {
+		StyledDocument doc = pane.getStyledDocument();
+
+		Style style = pane.addStyle("Manjsi Style", null);
+		StyleConstants.setFontSize(style, 11);
+		try {
+			doc.insertString(doc.getLength(), datum, style);
+		} 
+		catch (BadLocationException e) {
+			e.printStackTrace();
+		}           
+	}
+	public void dodajVsebino(JTextPane pane, String vsebina) {
+		StyledDocument doc = pane.getStyledDocument();
+
+		Style style = pane.addStyle("Obicajen Style", null);
+		try {
+			doc.insertString(doc.getLength(), vsebina, style);
+		} 
+		catch (BadLocationException e) {
+			e.printStackTrace();
+		}           
+	}
+	
 	/*
 	 * Ta metoda izpiše na zaslon vsa sporoèila v seznamu.
 	 */
@@ -238,28 +294,27 @@ public class ChatFrame extends JFrame
 				izpisiSporocilo(sporocilo, this.outputJavni);
 			}else {
 				String imePosiljatelja = sporocilo.getSender();
-				Uporabnik posiljatelj = this.objektiUporabnikov.get(
-						imePosiljatelja);
+				Uporabnik posiljatelj = 
+						this.objektiUporabnikov.get(imePosiljatelja);
 				izpisiSporocilo(sporocilo, posiljatelj.getOutput());
 			}
 		}
 	}
 
 	/*
-	 * funkcija pregleda trenutne uporabnike 
-	 * in nove doda med zavihke za zasebni pogovor,
-	 * hkrati pa tiste, ki se odjavijo, odstrani iz evidenc. 
+	 * funkcija pregleda trenutne uporabnike in nove doda med zavihke za 
+	 * zasebni pogovor, hkrati pa tiste, ki se odjavijo, odstrani iz evidenc. 
 	 */
-	public void izpisiUporabnike(List<Uporabnik> uporabniki) {
+	public void prikaziUporabnike(List<Uporabnik> uporabniki) {
 		Set<String> prejsnjiUporabniki = new HashSet<String>(
 				this.trenutniUporabniki); 
 		this.trenutniUporabniki = new HashSet<String>();
 		for (Uporabnik nekdo : uporabniki) {
 			String trenutnoIme = nekdo.getUsername(); 
 			this.trenutniUporabniki.add(trenutnoIme);
-			if (!prejsnjiUporabniki.contains(trenutnoIme) 
-					&& !trenutnoIme.equals(this.vzdevek.getText())
-					&& !trenutnoIme.equals(this.prejsnji)) {  
+			if (!trenutnoIme.equals(this.vzdevek.getText())
+					&& !trenutnoIme.equals(this.prejsnji)
+					&& !prejsnjiUporabniki.contains(trenutnoIme) ) {  
 				dodajZavihek(nekdo);
 			}
 		}
@@ -275,7 +330,9 @@ public class ChatFrame extends JFrame
 		}else {
 			if (prikazanNiUporabnikov && 
 					!this.trenutniUporabniki.equals(new HashSet<String>())) {
+				odstranjujem = true;
 				outputZasebni.removeTabAt(0);
+				odstranjujem = false;
 				prikazanNiUporabnikov = false;
 			}
 		}
@@ -287,7 +344,6 @@ public class ChatFrame extends JFrame
 	 * da lahko kasneje sporoèila pišemo v prava okna.
 	 */
 	public void dodajZavihek(Uporabnik nekdo) {
-		// TODO: ko se odjavi, naj ostane pogovor, èe je bilo kaj vsebine
 		nekdo.setOutput();
 		String ime = nekdo.getUsername();
 		this.objektiUporabnikov.put(ime, nekdo);
@@ -301,7 +357,9 @@ public class ChatFrame extends JFrame
 	 * želimo z njim imeti nov pogovor)
 	 */
 	private void odstraniZavihek(String ime) {
+		odstranjujem = true;
 		this.outputZasebni.removeTabAt(this.outputZasebni.indexOfTab(ime));
+		odstranjujem = false;
 		this.objektiUporabnikov.remove(ime);  
 	}
 
@@ -312,12 +370,15 @@ public class ChatFrame extends JFrame
 	private void odjavljenUporabnik(String ime) {
 		Uporabnik uporabnik = this.objektiUporabnikov.get(ime);
 		if (uporabnik.getOutput().getText().equals("")) {
+			odstranjujem = true;
 			odstraniZavihek(ime);
+			odstranjujem = false;
 		}else {
-		this.hranjeniPogovori.add(ime);
-		String text = uporabnik.getOutput().getText() + "Uporabnik " + ime + " se je odjavil.";
-		izpisiSporocilo(new Sporocilo(false, vzdevek.getText(), 
-				"Sistem", text), uporabnik.getOutput());
+			this.hranjeniPogovori.add(ime);
+			String text = "Uporabnik " + ime + " se je odjavil.";
+			izpisiSporocilo(new Sporocilo(false, vzdevek.getText(), 
+					"Sistem", text), uporabnik.getOutput());
+			outputZasebni.setTitleAt(outputZasebni.indexOfTab(ime), ime + " (off)");
 		}
 	}
 
@@ -328,7 +389,10 @@ public class ChatFrame extends JFrame
 		robot.deaktiviraj();
 		Komunikacija.odjaviSe(this.prejsnji);
 		this.prijavljen = false;
+		niUporabnikov.setText(nisiPrijavljenText);
+		odstranjujem = true;
 		outputZasebni.removeAll();
+		odstranjujem = false;
 		trenutniUporabniki = new HashSet<String>();
 		outputZasebni.addTab("ni prijavljenih uporabnikov", niUporabnikov);
 		prikazanNiUporabnikov = true;
@@ -343,6 +407,7 @@ public class ChatFrame extends JFrame
 		Komunikacija.logirajSe(ime);
 		this.prejsnji = ime;
 		this.prijavljen = true;
+		this.niUporabnikov.setText(this.siPrijavljenTekst);
 		robot.aktiviraj();
 	}
 
@@ -422,23 +487,42 @@ public class ChatFrame extends JFrame
 				 * Pritisnjena tipka je Enter v zasebni pogovor -
 				 * sproži izpis sporoèila in pošiljanje.
 				 */
+				Integer indeksAktivnegaZavihka = 
+						outputZasebni.getSelectedIndex();
+				String imePrejemnika = 
+						outputZasebni.getTitleAt(indeksAktivnegaZavihka);
 				if (!prikazanNiUporabnikov 
-						&& !this.inputZasebni.getText().equals("")) {
+						&& !this.inputZasebni.getText().equals("")
+						&& trenutniUporabniki.contains(imePrejemnika)) {
 					Sporocilo sporocilo = new Sporocilo(false, 
 							this.inputZasebni.getText());
 					sporocilo.setSender(vzdevek.getText());
-
-					Integer indeksAktivnegaZavihka = 
-							outputZasebni.getSelectedIndex();
-					String imePrejemnika = 
-							outputZasebni.getTitleAt(indeksAktivnegaZavihka);
+					sporocilo.setRecipient(imePrejemnika);
 					Uporabnik prejemnik = 
 							objektiUporabnikov.get(imePrejemnika);
-
-					sporocilo.setRecipient(imePrejemnika);
 					this.izpisiSporocilo(sporocilo, prejemnik.getOutput());
 					Komunikacija.posljiSporocilo(sporocilo);
 					this.inputZasebni.setText("");
+				}
+			}
+			if (e.getSource() == this.vzdevek) {
+				if (e.getKeyChar() == '\n') {
+					String ime = vzdevek.getText();
+					Sporocilo obvestilo = new Sporocilo(true, 
+							"");
+					obvestilo.setSender("Sistem");
+					try{
+						if (this.prijavljen) {
+							odjaviSe();
+						}
+						prijaviSe(ime);
+						obvestilo.setText("Prijava " + ime + " je uspela.");
+						izpisiSporocilo(obvestilo, this.outputJavni);
+					} catch (Exception ef) {
+						ef.printStackTrace();
+						obvestilo.setText("Uporabnik " + ime + " je že prijavljen.");
+						izpisiSporocilo(obvestilo, this.outputJavni);
+					}
 				}
 			}
 		}
@@ -453,6 +537,7 @@ public class ChatFrame extends JFrame
 			Komunikacija.odjaviSe(this.prejsnji);
 			robot.deaktiviraj();
 			this.prijavljen = false;
+			this.niUporabnikov.setText(this.nisiPrijavljenText);
 		}
 	}
 
@@ -460,37 +545,30 @@ public class ChatFrame extends JFrame
 	public void windowOpened(WindowEvent e) {
 		vzdevek.requestFocusInWindow();
 	}
-
 	@Override
 	public void keyPressed(KeyEvent e) {
 		// TODO Auto-generated method stub
 	}
-
 	@Override
 	public void keyReleased(KeyEvent e) {
 		// TODO Auto-generated method stub
 	}
-
 	@Override
 	public void windowActivated(WindowEvent e) {
 		// TODO Auto-generated method stub
 	}
-
 	@Override
 	public void windowClosed(WindowEvent e) {
 		// TODO Auto-generated method stub
 	}
-
 	@Override
 	public void windowDeactivated(WindowEvent e) {
 		// TODO Auto-generated method stub
 	}
-
 	@Override
 	public void windowDeiconified(WindowEvent e) {
 		// TODO Auto-generated method stub
 	}
-
 	@Override
 	public void windowIconified(WindowEvent e) {
 		// TODO Auto-generated method stub

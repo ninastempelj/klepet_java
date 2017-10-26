@@ -5,11 +5,12 @@ import java.awt.Color;
 import java.util.Random;
 
 import javax.swing.JTextArea;
+import javax.swing.JTextPane;
 
 public class Uporabnik {
 	private String last_active;
 	private String username;
-	private JTextArea output;
+	private JTextPane output;
 	private Color barva;
     private final Random rnd = new Random();
 	//private JTextField input;
@@ -25,7 +26,7 @@ public class Uporabnik {
 		this.barva = new Color(rnd.nextInt());
 	}
 
-	public Uporabnik(String ime, String aktiven, JTextArea output) {
+	public Uporabnik(String ime, String aktiven, JTextPane output) {
 		this.setUsername(ime);
 		this.setLast_active(aktiven);
 		this.setOutput(output);
@@ -48,16 +49,16 @@ public class Uporabnik {
 		this.username = username;
 	}
 
-	public JTextArea getOutput() {
+	public JTextPane getOutput() {
 		return output;
 	}
 
-	public void setOutput(JTextArea output) {
+	public void setOutput(JTextPane output) {
 		this.output = output;
 	}
 
 	public void setOutput() {
-		this.output = new JTextArea(18, 35);
+		this.output = new JTextPane();
 		this.output.setEditable(false);
 	}
 

@@ -38,6 +38,6 @@ public class Robot extends TimerTask {
 	 */
 	public void run() {
 		this.chat.izpisiSporocilo(Komunikacija.novaSporocila(chat.getPrejsnji()));
-		this.chat.izpisiUporabnike(Komunikacija.vpisaniUporabniki());
+		this.chat.prikaziUporabnike(Komunikacija.vpisaniUporabniki());
 	}
 }
