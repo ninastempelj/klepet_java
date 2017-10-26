@@ -83,7 +83,7 @@ implements ActionListener, KeyListener, WindowListener {
 		this.odstranjujem = false;
 		this.siva = new Color(238, 238, 238);
 		this.sdf = new SimpleDateFormat("HH:mm");
-		
+
 		/*
 		 * Razdelimo naše okno na tri dele: 
 		 * - najprej na vrhu naredimo vrstico z vzdevkom in gumbi
@@ -171,7 +171,7 @@ implements ActionListener, KeyListener, WindowListener {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				if (!odstranjujem && prijavljen 
-				        && e.getSource() instanceof JTabbedPane) {
+						&& e.getSource() instanceof JTabbedPane) {
 					JTabbedPane output = (JTabbedPane) e.getSource();
 					output.setBackgroundAt(output.getSelectedIndex(), siva);
 				}
@@ -329,7 +329,7 @@ implements ActionListener, KeyListener, WindowListener {
 			prikazanNiUporabnikov = true;
 		}else {
 			if (prikazanNiUporabnikov 
-				   && !this.trenutniUporabniki.equals(new HashSet<String>())) {
+					&& !this.trenutniUporabniki.equals(new HashSet<String>())) {
 				odstranjujem = true;
 				outputZasebni.removeTabAt(0);
 				odstranjujem = false;
@@ -381,7 +381,7 @@ implements ActionListener, KeyListener, WindowListener {
 					new Sporocilo(false, vzdevek.getText(), "Sistem", text), 
 					uporabnik.getOutput());
 			outputZasebni.setTitleAt(outputZasebni.indexOfTab(ime),
-					                      ime + " (off)");
+					ime + " (off)");
 		}
 	}
 
@@ -439,21 +439,24 @@ implements ActionListener, KeyListener, WindowListener {
 		 * klik gumba Prijavi - prijavi uporabnika, èe lahko.
 		 */
 		if (e.getSource() == this.prijavniGumb) {
-			try{
-				if (this.prijavljen) {
-					odjaviSe();
-				}
-				prijaviSe(ime);
-				obvestilo.setText("Prijava " + ime + " je uspela.");
-				izpisiSporocilo(obvestilo, this.outputJavni);
-			} catch (Exception ef) {
-				String obvestiloNapaka = ef.getMessage();
-				if (obvestiloNapaka.equals("Forbidden")) {
-					obvestilo.setText("Uporabnik " + ime 
-												   + " je že prijavljen.");
+			if (!this.prijavljen 
+					|| !this.vzdevek.getText().equals(this.prejsnji)) {
+				try{
+					if (this.prijavljen) {
+						odjaviSe();
+					}
+					prijaviSe(ime);
+					obvestilo.setText("Prijava " + ime + " je uspela.");
 					izpisiSporocilo(obvestilo, this.outputJavni);
-				}else {
-				ef.printStackTrace();
+				} catch (Exception ef) {
+					String obvestiloNapaka = ef.getMessage();
+					if (obvestiloNapaka.equals("Forbidden")) {
+						obvestilo.setText("Uporabnik " + ime 
+								+ " je že prijavljen.");
+						izpisiSporocilo(obvestilo, this.outputJavni);
+					}else {
+						ef.printStackTrace();
+					}
 				}
 			}
 		}
@@ -473,7 +476,7 @@ implements ActionListener, KeyListener, WindowListener {
 		if (e.getSource() == this.zavihkiGumb) {
 			for (String zaOdstranit : this.hranjeniPogovori) {
 				outputZasebni.removeTabAt(outputZasebni.indexOfTab(
-						                          zaOdstranit + " (off)"));
+						zaOdstranit + " (off)"));
 			}
 			this.hranjeniPogovori.clear();
 			this.zavihkiGumb.setVisible(false);
