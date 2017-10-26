@@ -7,25 +7,24 @@ public class Sporocilo {
 	private String text;
 	private String recipient;
 	private String sent_at;
-	
-	
+
 	/*
 	 * Ustvari prazno sporocilo.
 	 */
 	public Sporocilo() {
 	}
-	
+
 	public Sporocilo(Boolean globalno, String vsebina) {
 		this.global = globalno;
 		this.text = vsebina;
 	}
-	
+
 	public Sporocilo(Boolean globalno, String naslovnik, String vsebina) {
 		this.global = globalno;
 		this.text = vsebina;
 		this.recipient = naslovnik;
 	}
-	
+
 	public Sporocilo(Boolean globalno, String naslovnik, String posiljatelj, 
 			String vsebina) {
 		this.global = globalno;
@@ -33,7 +32,7 @@ public class Sporocilo {
 		this.sender = posiljatelj;
 		this.recipient = naslovnik;
 	}
-	
+
 	public Sporocilo(Boolean globalno, String naslovnik, String posiljatelj, 
 			String vsebina, String sent_at) {
 		this.global = globalno;
@@ -42,7 +41,7 @@ public class Sporocilo {
 		this.recipient = naslovnik;
 		this.setSent_at(sent_at);
 	}
-	
+
 	public String getRecipient() {
 		return recipient;
 	}
@@ -67,11 +66,9 @@ public class Sporocilo {
 	public void setSender(String posiljatelj) {
 		this.sender = posiljatelj;
 	}
-
 	public String getSent_at() {
 		return sent_at;
 	}
-
 	public void setSent_at(String sent_at) {
 		this.sent_at = sent_at;
 	}

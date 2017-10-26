@@ -19,16 +19,17 @@ public class Komunikacija {
 
 	static String time = Long.toString(new Date().getTime());
 
-
 	public static List<Uporabnik> vpisaniUporabniki (){
 		try {
-			String suroviUporabniki = Request.Get("http://chitchat.andrej.com/users")
+			String suroviUporabniki = Request.Get(
+					"http://chitchat.andrej.com/users")
 					.execute()
 					.returnContent().asString();
 
 			ObjectMapper map = new ObjectMapper();
-			List <Uporabnik> prijavljeniUporabniki = map.readValue(suroviUporabniki, 
-					new TypeReference<List<Uporabnik>>(){});
+			List <Uporabnik> prijavljeniUporabniki = 
+					map.readValue(suroviUporabniki, 
+					              new TypeReference<List<Uporabnik>>(){});
 			return prijavljeniUporabniki;
 
 		} catch (IOException e) {
@@ -37,7 +38,8 @@ public class Komunikacija {
 		}		
 	}
 
-	public static void logirajSe(String ime) throws ClientProtocolException, IOException{
+	public static void logirajSe(String ime) 
+			throws ClientProtocolException, IOException{
 		try{
 			URI uri = new URIBuilder("http://chitchat.andrej.com/users")
 					.addParameter("username", ime)
@@ -90,7 +92,7 @@ public class Komunikacija {
 			ObjectMapper map = new ObjectMapper();
 			List <Sporocilo> seznamSporocil = map.readValue(responseBody, 
 					new TypeReference<List<Sporocilo>>(){});
-
+			
 			return seznamSporocil;
 
 		} catch (URISyntaxException e) {

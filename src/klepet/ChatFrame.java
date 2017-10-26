@@ -13,7 +13,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,7 +36,6 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-
 @SuppressWarnings("serial")
 public class ChatFrame extends JFrame 
 implements ActionListener, KeyListener, WindowListener {
@@ -46,6 +45,7 @@ implements ActionListener, KeyListener, WindowListener {
 	public JTextField vzdevek;  // okno v katerega napišeš vzdevek
 	private JButton prijavniGumb;
 	private JButton odjavniGumb;
+	private JButton zavihkiGumb;
 	private JSplitPane pogovori;  
 	private JTextPane outputJavni; //prikaz sporoèil
 	private JTextField inputJavni; // pisanje sporoèil
@@ -55,18 +55,16 @@ implements ActionListener, KeyListener, WindowListener {
 	private String prejsnji; // hrani zadnjega prijavljenega v tem oknu.
 	private Set<String> trenutniUporabniki; // imena vseh trenutnih uporabnikov
 	private Map<String, Uporabnik> objektiUporabnikov; // Imena uporabnikov in njihovi objekti:
-	private Set<String> hranjeniPogovori; // zavihki odjavljenih uporabnikov
+	private List<String> hranjeniPogovori; // zavihki odjavljenih uporabnikov
 	private JTextArea niUporabnikov; // zavihek, ko ni prijavljenih uporabnikov
 	private boolean prikazanNiUporabnikov;
 	private String nisiPrijavljenText;
 	private String siPrijavljenTekst;
 	private Color siva;
 	private SimpleDateFormat sdf;
-	private Calendar cal;
 	private boolean odstranjujem;
 	// ------------------------------------------------------------------------
 
-	// TODO: možnost zapiranja mrtvih zavihkov.
 	public ChatFrame() {
 		super();
 		Container pane = this.getContentPane();  // shranimo osnovno plošèo
@@ -75,17 +73,17 @@ implements ActionListener, KeyListener, WindowListener {
 		//Nekaj zaèetnih vrednosti:
 		this.prikazanNiUporabnikov = true;
 		this.nisiPrijavljenText = "Èe želiš videti, kdo je prijavljen,"
-		 		+ " se prijavi še ti.";
+				+ " se prijavi še ti.";
 		this.siPrijavljenTekst = "Trenutno si edini prijavljen.";
 		this.prijavljen = false;
 		this.prejsnji = new String();
 		this.trenutniUporabniki = new HashSet<String>();
 		this.objektiUporabnikov = new HashMap<String, Uporabnik>();
-		this.hranjeniPogovori = new HashSet<String>();
+		this.hranjeniPogovori = new ArrayList<String>();
 		this.odstranjujem = false;
 		this.siva = new Color(238, 238, 238);
-		this.cal = Calendar.getInstance();
 		this.sdf = new SimpleDateFormat("HH:mm");
+		
 		/*
 		 * Razdelimo naše okno na tri dele: 
 		 * - najprej na vrhu naredimo vrstico z vzdevkom in gumbi
@@ -112,11 +110,16 @@ implements ActionListener, KeyListener, WindowListener {
 
 		this.prijavniGumb =  new JButton("Prijava");
 		vzdevekVrstica.add(prijavniGumb);
-		prijavniGumb.addActionListener(this);
+		this.prijavniGumb.addActionListener(this);
 
 		this.odjavniGumb =  new JButton("Odjava");
 		vzdevekVrstica.add(odjavniGumb);
-		odjavniGumb.addActionListener(this); 
+		this.odjavniGumb.addActionListener(this); 
+
+		this.zavihkiGumb = new JButton("Odstrani neaktivne zavihke");
+		this.zavihkiGumb.setVisible(false);
+		vzdevekVrstica.add(zavihkiGumb);
+		this.zavihkiGumb.addActionListener(this);
 
 		pane.add(vzdevekVrstica, vrsticaCon);
 
@@ -164,11 +167,11 @@ implements ActionListener, KeyListener, WindowListener {
 		privatniPogovorCon.weightx = 0.5;
 		privatniPogovorCon.weighty = 1;
 		zasebniPogovor.add(this.outputZasebni, privatniPogovorCon);
-		//TODO: outputZasebni.setTabClosingPolicy(TabClosingPolicy.ALL_TABS);
 		this.outputZasebni.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				if (!odstranjujem && prijavljen && e.getSource() instanceof JTabbedPane) {
+				if (!odstranjujem && prijavljen 
+				        && e.getSource() instanceof JTabbedPane) {
 					JTabbedPane output = (JTabbedPane) e.getSource();
 					output.setBackgroundAt(output.getSelectedIndex(), siva);
 				}
@@ -189,23 +192,23 @@ implements ActionListener, KeyListener, WindowListener {
 		/*
 		 * Razdeljevanje pogovorov:
 		 */
-		 this.pogovori = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
-				 javniPogovor, zasebniPogovor);
-		 GridBagConstraints pogovoriCon = new GridBagConstraints();
-		 pogovoriCon.gridx = 0;
-		 pogovoriCon.gridy = 1;
-		 pogovoriCon.fill = 1;
-		 pogovoriCon.weightx = 1;
-		 pogovoriCon.weighty = 1;
+		this.pogovori = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
+				javniPogovor, zasebniPogovor);
+		GridBagConstraints pogovoriCon = new GridBagConstraints();
+		pogovoriCon.gridx = 0;
+		pogovoriCon.gridy = 1;
+		pogovoriCon.fill = 1;
+		pogovoriCon.weightx = 1;
+		pogovoriCon.weighty = 1;
 
-		 pogovori.setOneTouchExpandable(true);
-		 pane.add(pogovori, pogovoriCon);
+		pogovori.setOneTouchExpandable(true);
+		pane.add(pogovori, pogovoriCon);
 
-		 this.niUporabnikov = new JTextArea(18,40);
-		 this.niUporabnikov.setText(this.nisiPrijavljenText);
-		 this.niUporabnikov.setEditable(false);
-		 this.outputZasebni.addTab("ni prijavljenih uporabnikov", 
-				 this.niUporabnikov);
+		this.niUporabnikov = new JTextArea(18,40);
+		this.niUporabnikov.setText(this.nisiPrijavljenText);
+		this.niUporabnikov.setEditable(false);
+		this.outputZasebni.addTab("ni prijavljenih uporabnikov", 
+				this.niUporabnikov);
 
 	}
 
@@ -229,7 +232,7 @@ implements ActionListener, KeyListener, WindowListener {
 			izpisiSporocilo(obvestilo, output);
 		}else{
 			dodajIme(output, posiljatelj);
-			dodajCas(output, " (" + sdf.format(cal.getTime())+ ") ");
+			dodajCas(output, " (" + sdf.format(new java.util.Date()) + ") ");
 			dodajVsebino(output, sporocilo.getText() + "\n");
 			output.setCaretPosition(output.getDocument().getLength());
 		}
@@ -247,10 +250,9 @@ implements ActionListener, KeyListener, WindowListener {
 	public void dodajIme(JTextPane pane, String ime) {
 		Color barva = Color.BLACK;
 		if (!ime.equals("Sistem") && !ime.equals(this.prejsnji)) {
-		barva = this.objektiUporabnikov.get(ime).getBarva();
+			barva = this.objektiUporabnikov.get(ime).getBarva();
 		}
 		StyledDocument doc = pane.getStyledDocument();
-
 		Style style = pane.addStyle("Color Style", null);
 		StyleConstants.setForeground(style, barva);
 		style.addAttribute(StyleConstants.Bold, true);
@@ -263,7 +265,6 @@ implements ActionListener, KeyListener, WindowListener {
 	}
 	public void dodajCas(JTextPane pane, String datum) {
 		StyledDocument doc = pane.getStyledDocument();
-
 		Style style = pane.addStyle("Manjsi Style", null);
 		StyleConstants.setFontSize(style, 11);
 		try {
@@ -275,7 +276,6 @@ implements ActionListener, KeyListener, WindowListener {
 	}
 	public void dodajVsebino(JTextPane pane, String vsebina) {
 		StyledDocument doc = pane.getStyledDocument();
-
 		Style style = pane.addStyle("Obicajen Style", null);
 		try {
 			doc.insertString(doc.getLength(), vsebina, style);
@@ -284,7 +284,7 @@ implements ActionListener, KeyListener, WindowListener {
 			e.printStackTrace();
 		}           
 	}
-	
+
 	/*
 	 * Ta metoda izpiše na zaslon vsa sporoèila v seznamu.
 	 */
@@ -328,8 +328,8 @@ implements ActionListener, KeyListener, WindowListener {
 			outputZasebni.addTab("ni prijavljenih uporabnikov", niUporabnikov);
 			prikazanNiUporabnikov = true;
 		}else {
-			if (prikazanNiUporabnikov && 
-					!this.trenutniUporabniki.equals(new HashSet<String>())) {
+			if (prikazanNiUporabnikov 
+				   && !this.trenutniUporabniki.equals(new HashSet<String>())) {
 				odstranjujem = true;
 				outputZasebni.removeTabAt(0);
 				odstranjujem = false;
@@ -364,8 +364,8 @@ implements ActionListener, KeyListener, WindowListener {
 	}
 
 	/*
-	 * Èe smo z uporabnikom zaèeli pogovor, ga ohrani,
-	 * dokler se ne prijavi nekdo z istim imenom, sicer zapre zavihek
+	 * Metoda se izvede, ko se drug uporabnik odjavi.
+	 * Èe smo z uporabnikom zaèeli pogovor, ga ohrani, sicer zapre zavihek.
 	 */
 	private void odjavljenUporabnik(String ime) {
 		Uporabnik uporabnik = this.objektiUporabnikov.get(ime);
@@ -375,10 +375,13 @@ implements ActionListener, KeyListener, WindowListener {
 			odstranjujem = false;
 		}else {
 			this.hranjeniPogovori.add(ime);
+			this.zavihkiGumb.setVisible(true);
 			String text = "Uporabnik " + ime + " se je odjavil.";
-			izpisiSporocilo(new Sporocilo(false, vzdevek.getText(), 
-					"Sistem", text), uporabnik.getOutput());
-			outputZasebni.setTitleAt(outputZasebni.indexOfTab(ime), ime + " (off)");
+			izpisiSporocilo(
+					new Sporocilo(false, vzdevek.getText(), "Sistem", text), 
+					uporabnik.getOutput());
+			outputZasebni.setTitleAt(outputZasebni.indexOfTab(ime),
+					                      ime + " (off)");
 		}
 	}
 
@@ -397,6 +400,7 @@ implements ActionListener, KeyListener, WindowListener {
 		outputZasebni.addTab("ni prijavljenih uporabnikov", niUporabnikov);
 		prikazanNiUporabnikov = true;
 		this.hranjeniPogovori.clear();
+		this.zavihkiGumb.setVisible(false);
 	}
 
 	/*
@@ -432,9 +436,9 @@ implements ActionListener, KeyListener, WindowListener {
 		String ime = vzdevek.getText();
 
 		/*
-		 * klik gumba Prijavi
+		 * klik gumba Prijavi - prijavi uporabnika, èe lahko.
 		 */
-		if (e.getSource() == prijavniGumb) {
+		if (e.getSource() == this.prijavniGumb) {
 			try{
 				if (this.prijavljen) {
 					odjaviSe();
@@ -443,19 +447,36 @@ implements ActionListener, KeyListener, WindowListener {
 				obvestilo.setText("Prijava " + ime + " je uspela.");
 				izpisiSporocilo(obvestilo, this.outputJavni);
 			} catch (Exception ef) {
+				String obvestiloNapaka = ef.getMessage();
+				if (obvestiloNapaka.equals("Forbidden")) {
+					obvestilo.setText("Uporabnik " + ime 
+												   + " je že prijavljen.");
+					izpisiSporocilo(obvestilo, this.outputJavni);
+				}else {
 				ef.printStackTrace();
-				obvestilo.setText("Uporabnik " + ime + " je že prijavljen.");
-				izpisiSporocilo(obvestilo, this.outputJavni);
+				}
 			}
 		}
 
 		/*
-		 * klik gumba Odjavi
+		 * klik gumba Odjavi - odjavi uporabnika
 		 */
-		if (e.getSource() == odjavniGumb) {
+		if (e.getSource() == this.odjavniGumb) {
 			odjaviSe();
 			obvestilo.setText("Odjava " + ime +" je uspela.");
 			izpisiSporocilo(obvestilo, this.outputJavni);	
+		}
+
+		/*
+		 * klik gumba zapri zavihke
+		 */
+		if (e.getSource() == this.zavihkiGumb) {
+			for (String zaOdstranit : this.hranjeniPogovori) {
+				outputZasebni.removeTabAt(outputZasebni.indexOfTab(
+						                          zaOdstranit + " (off)"));
+			}
+			this.hranjeniPogovori.clear();
+			this.zavihkiGumb.setVisible(false);
 		}
 	}
 
@@ -503,26 +524,6 @@ implements ActionListener, KeyListener, WindowListener {
 					this.izpisiSporocilo(sporocilo, prejemnik.getOutput());
 					Komunikacija.posljiSporocilo(sporocilo);
 					this.inputZasebni.setText("");
-				}
-			}
-			if (e.getSource() == this.vzdevek) {
-				if (e.getKeyChar() == '\n') {
-					String ime = vzdevek.getText();
-					Sporocilo obvestilo = new Sporocilo(true, 
-							"");
-					obvestilo.setSender("Sistem");
-					try{
-						if (this.prijavljen) {
-							odjaviSe();
-						}
-						prijaviSe(ime);
-						obvestilo.setText("Prijava " + ime + " je uspela.");
-						izpisiSporocilo(obvestilo, this.outputJavni);
-					} catch (Exception ef) {
-						ef.printStackTrace();
-						obvestilo.setText("Uporabnik " + ime + " je že prijavljen.");
-						izpisiSporocilo(obvestilo, this.outputJavni);
-					}
 				}
 			}
 		}

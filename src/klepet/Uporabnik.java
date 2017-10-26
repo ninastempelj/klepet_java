@@ -3,8 +3,6 @@ package klepet;
 
 import java.awt.Color;
 import java.util.Random;
-
-import javax.swing.JTextArea;
 import javax.swing.JTextPane;
 
 public class Uporabnik {
@@ -12,9 +10,7 @@ public class Uporabnik {
 	private String username;
 	private JTextPane output;
 	private Color barva;
-    private final Random rnd = new Random();
-	//private JTextField input;
-
+	private final Random rnd = new Random();
 
 	public Uporabnik() {
 		this.barva = new Color(rnd.nextInt());

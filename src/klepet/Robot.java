@@ -3,7 +3,7 @@ package klepet;
 /*
  *  Ta robot nam bo preverjal, èe je kaj novih sporoèil na strežniku
  *  in èe je kaj novih prijavljenih uporabnikov.
- *  To mora sporoèit chatframu.
+ *  To mora sporoèit chatFramu.
  */
 
 import java.util.Timer;
@@ -34,10 +34,12 @@ public class Robot extends TimerTask {
 	}
 
 	/*
-	 * Vsakokrat preveri prijavljene uporabnike in izpiše morebitna nova sporoèila.
+	 * Vsakokrat preveri prijavljene uporabnike 
+	 * in izpiše morebitna nova sporoèila.
 	 */
 	public void run() {
-		this.chat.izpisiSporocilo(Komunikacija.novaSporocila(chat.getPrejsnji()));
+		this.chat.izpisiSporocilo(
+				Komunikacija.novaSporocila(chat.getPrejsnji()));
 		this.chat.prikaziUporabnike(Komunikacija.vpisaniUporabniki());
 	}
 }
